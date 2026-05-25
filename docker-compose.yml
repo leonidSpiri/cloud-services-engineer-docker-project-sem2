@@ -26,8 +26,22 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    image: momo-store-frontend:local
+      args:
+        NODE_VERSION: ${NODE_VERSION:-20}
+        NGINX_VERSION: ${NGINX_VERSION:-1.27-alpine}
+        APP_VERSION: ${APP_VERSION:-local}
+        VUE_APP_API_URL: ${VUE_APP_API_URL:-/api}
+        VUE_PUBLIC_PATH: ${VUE_PUBLIC_PATH:-/}
+    image: ${FRONTEND_IMAGE:-momo-store-frontend:local}
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     ports:
-      - "80:8080"
+      - "${FRONTEND_PORT:-80}:8080"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/healthz >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
