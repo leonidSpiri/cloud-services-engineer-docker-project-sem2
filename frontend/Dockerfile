@@ -11,7 +11,7 @@ COPY package.json package-lock.json ./
 RUN --mount=type=cache,target=/root/.npm \
     npm ci --no-audit --no-fund
 
-ARG VUE_APP_API_URL=http://localhost:8081
+ARG VUE_APP_API_URL=/api
 ARG VUE_PUBLIC_PATH=/
 ENV VUE_APP_API_URL=${VUE_APP_API_URL}
 ENV VUE_PUBLIC_PATH=${VUE_PUBLIC_PATH}
