@@ -1,7 +1,19 @@
 name: momo-store
 
+x-security: &security
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+
+x-runtime-limits: &runtime-limits
+  cpus: "0.50"
+  mem_limit: 128m
+  pids_limit: 128
+
 services:
   backend:
+    <<: [*security, *runtime-limits]
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -18,6 +30,9 @@ services:
       - backend_net
     volumes:
       - backend-data:/var/lib/momo-store:rw
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8081/health >/dev/null || exit 1"]
@@ -27,6 +42,7 @@ services:
       start_period: 10s
 
   frontend:
+    <<: [*security, *runtime-limits]
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -45,6 +61,10 @@ services:
     networks:
       - public_net
       - backend_net
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+      - /var/cache/nginx:rw,noexec,nosuid,size=32m
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/healthz >/dev/null || exit 1"]
@@ -52,6 +72,30 @@ services:
       timeout: 3s
       retries: 3
       start_period: 10s
+
+  frontend-dev:
+    profiles:
+      - dev
+    <<: *security
+    image: node:${NODE_VERSION:-20}-alpine
+    working_dir: /app
+    user: node
+    command: sh -c "npm ci --no-audit --no-fund && npm run serve -- --host 0.0.0.0 --port 8080"
+    environment:
+      NODE_OPTIONS: --openssl-legacy-provider
+      VUE_APP_API_URL: ${VUE_APP_API_URL:-http://localhost:8081}
+      VUE_PUBLIC_PATH: /
+    depends_on:
+      backend-gateway:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_DEV_PORT:-8080}:8080"
+    networks:
+      - public_net
+    volumes:
+      - ./frontend:/app:rw
+      - frontend-node-modules:/app/node_modules:rw
+    restart: unless-stopped
 
 networks:
   public_net:
@@ -62,3 +106,4 @@ networks:
 
 volumes:
   backend-data:
+  frontend-node-modules:
