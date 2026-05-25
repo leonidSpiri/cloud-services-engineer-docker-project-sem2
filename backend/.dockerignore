@@ -1,0 +1,13 @@
+.git
+.github
+.idea
+.vscode
+Dockerfile
+*.md
+*.test
+*.out
+bin/
+dist/
+tmp/
+vendor/
+**/.DS_Store
