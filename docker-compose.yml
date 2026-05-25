@@ -24,8 +24,8 @@ services:
     image: ${BACKEND_IMAGE:-momo-store-backend:local}
     environment:
       PORT: "8081"
-    ports:
-      - "${BACKEND_PORT:-8081}:8081"
+    expose:
+      - "8081"
     networks:
       - backend_net
     volumes:
@@ -36,6 +36,31 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8081/health >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  backend-gateway:
+    <<: [*security, *runtime-limits]
+    image: nginxinc/nginx-unprivileged:${NGINX_VERSION:-1.27-alpine}
+    volumes:
+      - ./deploy/nginx/backend-gateway.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${BACKEND_PORT:-8081}:8080"
+    networks:
+      - public_net
+      - backend_net
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+      - /var/cache/nginx:rw,noexec,nosuid,size=32m
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/health >/dev/null || exit 1"]
       interval: 30s
       timeout: 3s
       retries: 3
