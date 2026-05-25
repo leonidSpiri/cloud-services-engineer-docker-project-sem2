@@ -57,7 +57,7 @@ jobs:
       - name: Build images for scan
         run: docker compose build
       - name: Scan backend image
-        uses: aquasecurity/trivy-action@0.58.2
+        uses: aquasecurity/trivy-action@0.70.0
         with:
           image-ref: momo-store-backend:local
           scanners: vuln
@@ -65,7 +65,7 @@ jobs:
           ignore-unfixed: true
           exit-code: "1"
       - name: Scan frontend image
-        uses: aquasecurity/trivy-action@0.58.2
+        uses: aquasecurity/trivy-action@0.70.0
         with:
           image-ref: momo-store-frontend:local
           scanners: vuln
