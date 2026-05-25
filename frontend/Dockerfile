@@ -23,6 +23,10 @@ FROM nginxinc/nginx-unprivileged:${NGINX_VERSION}
 
 ARG APP_VERSION=local
 
+USER root
+
+RUN apk upgrade --no-cache
+
 LABEL org.opencontainers.image.title="momo-store-frontend" \
       org.opencontainers.image.description="Vue frontend for Momo Store" \
       org.opencontainers.image.version="${APP_VERSION}"
