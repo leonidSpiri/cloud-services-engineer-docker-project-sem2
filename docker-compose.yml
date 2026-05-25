@@ -1,11 +1,26 @@
+name: momo-store
+
 services:
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    image: momo-store-backend:local
+      args:
+        GO_VERSION: ${GO_VERSION:-1.22}
+        ALPINE_VERSION: ${ALPINE_VERSION:-3.21}
+        APP_VERSION: ${APP_VERSION:-local}
+    image: ${BACKEND_IMAGE:-momo-store-backend:local}
+    environment:
+      PORT: "8081"
     ports:
-      - "8081:8081"
+      - "${BACKEND_PORT:-8081}:8081"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8081/health >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
 
   frontend:
     build:
