@@ -24,12 +24,15 @@ services:
     image: ${BACKEND_IMAGE:-momo-store-backend:local}
     environment:
       PORT: "8081"
+      APP_SECRET_FILE: /run/secrets/backend_token
     expose:
       - "8081"
     networks:
       - backend_net
     volumes:
       - backend-data:/var/lib/momo-store:rw
+    secrets:
+      - backend_token
     read_only: true
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=16m
@@ -54,6 +57,8 @@ services:
     networks:
       - public_net
       - backend_net
+    secrets:
+      - backend_token
     read_only: true
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=32m
@@ -86,6 +91,8 @@ services:
     networks:
       - public_net
       - backend_net
+    secrets:
+      - backend_token
     read_only: true
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=32m
@@ -132,3 +139,7 @@ networks:
 volumes:
   backend-data:
   frontend-node-modules:
+
+secrets:
+  backend_token:
+    file: ${BACKEND_SECRET_SOURCE:-./secrets/backend_token.example}
